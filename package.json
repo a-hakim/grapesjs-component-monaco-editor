@@ -1,30 +1,31 @@
 {
-  "name": "grapesjs-component-code-editor",
-  "version": "1.0.26",
-  "description": "Grapesjs Component Code Editor",
-  "main": "dist/grapesjs-component-code-editor.min.js",
+  "name": "grapesjs-component-monaco-editor",
+  "version": "1.0.1",
+  "description": "Grapesjs Component Monaco Editor",
+  "main": "dist/grapesjs-component-monaco-editor.min.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ju99ernaut/grapesjs-component-code-editor.git"
+    "url": "https://github.com/a-hakim/grapesjs-component-monaco-editor.git"
   },
   "scripts": {
     "start": "set NODE_OPTIONS=--openssl-legacy-provider && grapesjs-cli serve",
     "build": "set NODE_OPTIONS=--openssl-legacy-provider && grapesjs-cli build",
-    "build:css": "sass src/styles.scss dist/grapesjs-component-code-editor.min.css --style compressed",
+    "build:css": "sass src/styles.scss dist/grapesjs-component-monaco-editor.min.css --style compressed",
     "bump": "npm version patch -m 'Bump v%s'"
   },
   "keywords": [
     "grapesjs",
     "plugin",
     "component",
-    "code-editor"
+    "code-editor",
+    "monaco-editor"
   ],
   "devDependencies": {
     "grapesjs-cli": "^1.0.12",
     "monaco-editor-webpack-plugin": "^7.1.0",
     "sass": "^1.89.2"
   },
-  "author": "Brendon Ngirazi",
+  "author": "A.Hakim",
   "license": "MIT",
   "dependencies": {
     "split.js": "^1.6.2"

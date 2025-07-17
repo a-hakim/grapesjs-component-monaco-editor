@@ -133,7 +133,7 @@ export class CodeEditor {
         };
 
         // Set initial loading message
-        container.innerHTML = `<div style="padding: 20px; color: #888; text-align: center; background: #1e1e1e; border: 1px solid #3c3c3c;">Loading Monaco Editor...</div>`;
+        container.innerHTML = `<div style="padding: 20px; color: #888; text-align: center; background: #1e1e1e; border: 1px solid #3c3c3c;">Loading Editor...</div>`;
         
         // Store reference for later initialization
         if (!this.editorWrappers) {
