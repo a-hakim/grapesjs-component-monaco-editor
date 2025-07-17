@@ -9,6 +9,8 @@ export default (editor, opts) => {
         run: editor => {
             !codeEditor && (codeEditor = new CodeEditor(editor, opts)) && codeEditor.buildCodePanel();
             codeEditor.showCodePanel();
+            // Expose CodeEditor instance to the editor object
+            editor.CodeEditor = codeEditor;
         },
         stop: editor => {
             codeEditor && codeEditor.hideCodePanel();

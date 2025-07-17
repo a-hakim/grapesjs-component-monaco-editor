@@ -1,6 +1,6 @@
 {
   "name": "grapesjs-component-code-editor",
-  "version": "1.0.22",
+  "version": "1.0.26",
   "description": "Grapesjs Component Code Editor",
   "main": "dist/grapesjs-component-code-editor.min.js",
   "repository": {
@@ -21,6 +21,7 @@
   ],
   "devDependencies": {
     "grapesjs-cli": "^1.0.12",
+    "monaco-editor-webpack-plugin": "^7.1.0",
     "sass": "^1.89.2"
   },
   "author": "Brendon Ngirazi",

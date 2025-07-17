@@ -1,0 +1,28 @@
+/* Monaco Editor Styles */
+.code-panel .monaco-editor {
+    border: 1px solid #3c3c3c;
+}
+
+.code-panel .monaco-editor .margin {
+    background-color: #1e1e1e;
+}
+
+.code-panel .monaco-editor .monaco-editor-background {
+    background-color: #1e1e1e;
+}
+
+/* Ensure proper sizing for Monaco containers */
+.code-panel section {
+    display: flex;
+    flex-direction: column;
+}
+
+.code-panel section > div:last-child {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.code-panel section > div:last-child > div {
+    flex: 1;
+}
