@@ -1,6 +1,6 @@
 {
   "name": "grapesjs-component-monaco-editor",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "Grapesjs Component Monaco Editor",
   "main": "dist/grapesjs-component-monaco-editor.min.js",
   "repository": {

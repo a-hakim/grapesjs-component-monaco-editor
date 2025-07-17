@@ -31,56 +31,59 @@ export class CodeEditor {
     }
 
     loadMonaco() {
+        // Check if Monaco is already loaded
         if (window.monaco) {
             this.monacoReady = true;
             return Promise.resolve();
         }
 
-        return new Promise((resolve, reject) => {
+        // Check if Monaco is currently being loaded
+        if (window.monacoLoading) {
+            return window.monacoLoading;
+        }
+
+        // Create a global promise to prevent multiple loads
+        window.monacoLoading = new Promise((resolve, reject) => {
+            // Check if loader script is already present
+            if (document.querySelector('script[src*="vs/loader.min.js"]')) {
+                // If script exists but Monaco isn't loaded yet, wait for it
+                const checkMonaco = () => {
+                    if (window.monaco) {
+                        this.configureMonaco();
+                        this.monacoReady = true;
+                        resolve();
+                    } else {
+                        setTimeout(checkMonaco, 100);
+                    }
+                };
+                checkMonaco();
+                return;
+            }
+
             // Load Monaco Editor from CDN
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs/loader.min.js';
             script.onload = () => {
-                window.require.config({
-                    paths: {
-                        'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs'
-                    }
-                });
+                // Check if require is already configured
+                if (!window.require || !window.require.config) {
+                    console.error('Monaco loader failed to initialize require');
+                    reject(new Error('Monaco loader failed to initialize require'));
+                    return;
+                }
+
+                // Configure paths only if not already configured
+                if (!window.require.s || !window.require.s.contexts || !window.require.s.contexts._.config.paths.vs) {
+                    window.require.config({
+                        paths: {
+                            'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.0/min/vs'
+                        }
+                    });
+                }
+
                 window.require(['vs/editor/editor.main'], () => {
-                    // Configure HTML language service
-                    window.monaco.languages.html.htmlDefaults.setOptions({
-                        format: {
-                            tabSize: 2,
-                            insertSpaces: true,
-                            wrapLineLength: 120,
-                            unformatted: 'default: "a, abbr, acronym, b, bdo, big, br, button, cite, code, dfn, em, i, img, input, kbd, label, map, mark, meter, noscript, object, output, q, ruby, s, samp, select, small, span, strong, sub, sup, textarea, time, tt, u, var, wbr"',
-                            contentUnformatted: 'pre',
-                            indentInnerHtml: false,
-                            preserveNewLines: true,
-                            maxPreserveNewLines: 2,
-                            indentHandlebars: false,
-                            endWithNewline: false,
-                            extraLiners: 'head, body, /html',
-                            wrapAttributes: 'auto'
-                        }
-                    });
-
-                    // Configure CSS language service
-                    window.monaco.languages.css.cssDefaults.setOptions({
-                        format: {
-                            insertSpaces: true,
-                            tabSize: 2,
-                            newlineBetweenSelectors: true,
-                            newlineBetweenRules: true,
-                            spaceAroundSelectorSeparator: true,
-                            braceStyle: 'collapse',
-                            maxPreserveNewLines: 2,
-                            preserveNewLines: true
-                        }
-                    });
-
+                    this.configureMonaco();
                     this.monacoReady = true;
-                    console.log('Monaco Editor loaded successfully');
+                    // console.log('Monaco Editor loaded successfully');
                     resolve();
                 });
             };
@@ -90,14 +93,57 @@ export class CodeEditor {
             };
             document.head.appendChild(script);
         });
+
+        return window.monacoLoading;
+    }
+
+    configureMonaco() {
+        if (!window.monaco) return;
+
+        // Configure HTML language service
+        window.monaco.languages.html.htmlDefaults.setOptions({
+            format: {
+                tabSize: 2,
+                insertSpaces: true,
+                wrapLineLength: 120,
+                unformatted: 'default: "a, abbr, acronym, b, bdo, big, br, button, cite, code, dfn, em, i, img, input, kbd, label, map, mark, meter, noscript, object, output, q, ruby, s, samp, select, small, span, strong, sub, sup, textarea, time, tt, u, var, wbr"',
+                contentUnformatted: 'pre',
+                indentInnerHtml: false,
+                preserveNewLines: true,
+                maxPreserveNewLines: 2,
+                indentHandlebars: false,
+                endWithNewline: false,
+                extraLiners: 'head, body, /html',
+                wrapAttributes: 'auto'
+            }
+        });
+
+        // Configure CSS language service
+        window.monaco.languages.css.cssDefaults.setOptions({
+            format: {
+                insertSpaces: true,
+                tabSize: 2,
+                newlineBetweenSelectors: true,
+                newlineBetweenRules: true,
+                spaceAroundSelectorSeparator: true,
+                braceStyle: 'collapse',
+                maxPreserveNewLines: 2,
+                preserveNewLines: true
+            }
+        });
     }
 
     buildCodeEditor(type) {
         const { editor, opts } = this;
+        
+        // Create unique container ID to prevent conflicts
+        const containerId = `monaco-editor-container-${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
         const container = document.createElement('div');
         container.style.width = '100%';
         container.style.height = '100%';
         container.className = `monaco-editor-container-${type}`;
+        container.id = containerId;
         
         const editorWrapper = {
             container: container,
@@ -150,7 +196,20 @@ export class CodeEditor {
             return;
         }
 
-        console.log(`Creating Monaco editor for ${type}...`);
+        // Check if editor already exists for this wrapper
+        if (editorWrapper.editor) {
+            // console.log(`Monaco editor already exists for ${type}, skipping creation`);
+            return;
+        }
+
+        // Check if Monaco instance already exists for this type
+        if (this.monacoInstances[type]) {
+            console.log(`Monaco instance already exists for ${type}, disposing old instance`);
+            this.monacoInstances[type].dispose();
+            delete this.monacoInstances[type];
+        }
+
+        // console.log(`Creating Monaco editor for ${type}...`);
         
         // Clear loading message
         editorWrapper.container.innerHTML = '';
@@ -178,7 +237,7 @@ export class CodeEditor {
 
             // Add keyboard shortcut for formatting (Ctrl+Shift+F or Cmd+Shift+F)
             monacoEditor.addAction({
-                id: 'format-code',
+                id: `format-code-${type}`,
                 label: 'Format Code',
                 keybindings: [
                     window.monaco.KeyMod.CtrlCmd | window.monaco.KeyMod.Shift | window.monaco.KeyCode.KeyF
@@ -194,7 +253,7 @@ export class CodeEditor {
             // Store the instance for later use
             this.monacoInstances[type] = monacoEditor;
             
-            console.log(`Monaco editor created successfully for ${type}`);
+            // console.log(`Monaco editor created successfully for ${type}`);
             
             // Auto-format any pending content
             if (editorWrapper.pendingContent && editorWrapper.pendingContent.trim()) {
@@ -249,7 +308,6 @@ export class CodeEditor {
             <div class="codepanel-separator">
                 <div class="codepanel-label">${type}</div>
                 <div class="cp-btn-container">
-                    ${cleanCssBtn}
                     <button class="cp-apply-${type} ${pfx}btn-prim">${btnText}</button>
                 </div>
             </div>`));
@@ -419,7 +477,7 @@ export class CodeEditor {
             const action = monacoEditor.getAction('editor.action.formatDocument');
             if (action) {
                 action.run().then(() => {
-                    console.log(`Code auto-formatted successfully for ${type}`);
+                    // console.log(`Code auto-formatted successfully for ${type}`);
                 }).catch(error => {
                     console.warn(`Monaco auto-formatting failed for ${type}, using fallback:`, error);
                     this.fallbackFormat(type, monacoEditor);
@@ -677,6 +735,25 @@ export class CodeEditor {
         }
         if (this.monacoInstances.css) {
             this.monacoInstances.css.dispose();
+        }
+        
+        // Clear editor wrappers
+        if (this.editorWrappers) {
+            Object.values(this.editorWrappers).forEach(wrapper => {
+                if (wrapper && wrapper.dispose) {
+                    wrapper.dispose();
+                }
+            });
+            this.editorWrappers = {};
+        }
+        
+        // Clear instances
+        this.monacoInstances = {};
+        
+        // Clear code panel
+        if (this.codePanel) {
+            this.codePanel.remove();
+            this.codePanel = null;
         }
     }
 }
