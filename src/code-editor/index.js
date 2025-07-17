@@ -1,5 +1,6 @@
 //Original work Copyright (c) 2018, Duarte Henriques, https://github.com/portablemind/grapesjs-code-editor
-//Modified work Copyright (c) 2020, Brendon Ngirazi,
+//Modified work Copyright (c) 2020, Brendon Ngirazi, https://github.com/Ju99ernaut/grapesjs-component-code-editor
+//Modified work Copyright (c) 2025, A.Hakim, https://github.com/a-hakim/grapesjs-component-monaco-editor
 //All rights reserved.
 
 import Split from 'split.js';
