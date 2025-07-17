@@ -26,3 +26,55 @@
 .code-panel section > div:last-child > div {
     flex: 1;
 }
+
+/* Format button styling */
+.cp-btn-container {
+    display: flex;
+    gap: 5px;
+}
+
+.cp-format-html,
+.cp-format-css {
+    background-color: #007acc;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: background-color 0.2s ease;
+    min-width: 60px;
+}
+
+.cp-format-html:hover,
+.cp-format-css:hover {
+    background-color: #005a9e;
+}
+
+.cp-format-html:active,
+.cp-format-css:active {
+    background-color: #004578;
+}
+
+.cp-format-html:disabled,
+.cp-format-css:disabled {
+    background-color: #666666;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.codepanel-separator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    background-color: #2d2d30;
+    border-bottom: 1px solid #3c3c3c;
+}
+
+.codepanel-label {
+    color: #cccccc;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 11px;
+}

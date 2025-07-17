@@ -46,6 +46,38 @@ export class CodeEditor {
                     }
                 });
                 window.require(['vs/editor/editor.main'], () => {
+                    // Configure HTML language service
+                    window.monaco.languages.html.htmlDefaults.setOptions({
+                        format: {
+                            tabSize: 2,
+                            insertSpaces: true,
+                            wrapLineLength: 120,
+                            unformatted: 'default: "a, abbr, acronym, b, bdo, big, br, button, cite, code, dfn, em, i, img, input, kbd, label, map, mark, meter, noscript, object, output, q, ruby, s, samp, select, small, span, strong, sub, sup, textarea, time, tt, u, var, wbr"',
+                            contentUnformatted: 'pre',
+                            indentInnerHtml: false,
+                            preserveNewLines: true,
+                            maxPreserveNewLines: 2,
+                            indentHandlebars: false,
+                            endWithNewline: false,
+                            extraLiners: 'head, body, /html',
+                            wrapAttributes: 'auto'
+                        }
+                    });
+
+                    // Configure CSS language service
+                    window.monaco.languages.css.cssDefaults.setOptions({
+                        format: {
+                            insertSpaces: true,
+                            tabSize: 2,
+                            newlineBetweenSelectors: true,
+                            newlineBetweenRules: true,
+                            spaceAroundSelectorSeparator: true,
+                            braceStyle: 'collapse',
+                            maxPreserveNewLines: 2,
+                            preserveNewLines: true
+                        }
+                    });
+
                     this.monacoReady = true;
                     console.log('Monaco Editor loaded successfully');
                     resolve();
@@ -134,7 +166,21 @@ export class CodeEditor {
                     horizontal: 'auto'
                 },
                 wordWrap: 'on',
+                formatOnType: true,
+                formatOnPaste: true,
                 ...this.opts.codeViewOptions
+            });
+
+            // Add keyboard shortcut for formatting (Ctrl+Shift+F or Cmd+Shift+F)
+            monacoEditor.addAction({
+                id: 'format-code',
+                label: 'Format Code',
+                keybindings: [
+                    window.monaco.KeyMod.CtrlCmd | window.monaco.KeyMod.Shift | window.monaco.KeyCode.KeyF
+                ],
+                run: () => {
+                    this.formatCode(type);
+                }
             });
 
             editorWrapper.editor = monacoEditor;
@@ -187,11 +233,13 @@ export class CodeEditor {
         const btnText = type === 'html' ? opts.htmlBtnText : opts.cssBtnText;
         const cleanCssBtn = (opts.cleanCssBtn && type === 'css') ?
             `<button class="cp-delete-${type} ${pfx}btn-prim">${opts.cleanCssBtnText}</button>` : '';
+        const formatBtn = `<button class="cp-format-${type} ${pfx}btn-prim" title="Format Code">Format</button>`;
         section.append($(`
             <div class="codepanel-separator">
                 <div class="codepanel-label">${type}</div>
                 <div class="cp-btn-container">
                     ${cleanCssBtn}
+                    ${formatBtn}
                     <button class="cp-apply-${type} ${pfx}btn-prim">${btnText}</button>
                 </div>
             </div>`));
@@ -225,6 +273,13 @@ export class CodeEditor {
 
         this.opts.cleanCssBtn && this.codePanel.find('.cp-delete-css')
             .on('click', this.deleteSelectedCss.bind(this));
+
+        // Add format button event listeners
+        this.codePanel.find('.cp-format-html')
+            .on('click', this.formatCode.bind(this, 'html'));
+
+        this.codePanel.find('.cp-format-css')
+            .on('click', this.formatCode.bind(this, 'css'));
 
         Split(sections, {
             direction: 'vertical',
@@ -341,6 +396,142 @@ export class CodeEditor {
     refreshEditors() {
         this.htmlCodeEditor.refresh();
         this.cssCodeEditor.refresh();
+    }
+
+    formatCode(type) {
+        const monacoEditor = this.monacoInstances[type];
+        if (!monacoEditor) {
+            console.warn(`Monaco editor for ${type} not found`);
+            return;
+        }
+
+        // Show formatting in progress
+        const button = this.codePanel.find(`.cp-format-${type}`);
+        const originalText = button.text();
+        button.text('Formatting...').prop('disabled', true);
+
+        try {
+            // Try Monaco's built-in formatting first
+            const action = monacoEditor.getAction('editor.action.formatDocument');
+            if (action) {
+                action.run().then(() => {
+                    console.log(`Code formatted successfully for ${type}`);
+                }).catch(error => {
+                    console.warn(`Monaco formatting failed for ${type}, using fallback:`, error);
+                    this.fallbackFormat(type, monacoEditor);
+                }).finally(() => {
+                    // Restore button
+                    button.text(originalText).prop('disabled', false);
+                });
+            } else {
+                // Use fallback if action not available
+                this.fallbackFormat(type, monacoEditor);
+                button.text(originalText).prop('disabled', false);
+            }
+        } catch (error) {
+            console.error(`Failed to format ${type} code:`, error);
+            // Fallback to basic formatting if Monaco formatting fails
+            this.fallbackFormat(type, monacoEditor);
+            button.text(originalText).prop('disabled', false);
+        }
+    }
+
+    fallbackFormat(type, monacoEditor) {
+        const content = monacoEditor.getValue();
+        if (!content.trim()) return;
+
+        let formattedContent = '';
+        
+        if (type === 'html') {
+            formattedContent = this.formatHtml(content);
+        } else if (type === 'css') {
+            formattedContent = this.formatCss(content);
+        }
+
+        if (formattedContent && formattedContent !== content) {
+            monacoEditor.setValue(formattedContent);
+        }
+    }
+
+    formatHtml(html) {
+        try {
+            // Basic HTML formatting with better indentation
+            let formatted = html
+                .replace(/>\s*</g, '><') // Remove whitespace between tags
+                .replace(/></g, '>\n<')  // Add newlines between tags
+                .split('\n')
+                .filter(line => line.trim())
+                .map((line, index, array) => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return '';
+                    
+                    let indent = 0;
+                    
+                    // Calculate indentation level
+                    for (let i = 0; i < index; i++) {
+                        const prevLine = array[i].trim();
+                        if (!prevLine) continue;
+                        
+                        // Count opening tags (not self-closing)
+                        const openTags = (prevLine.match(/<[^\/!][^>]*(?<!\/\s*)>/g) || []).length;
+                        // Count closing tags
+                        const closeTags = (prevLine.match(/<\/[^>]*>/g) || []).length;
+                        // Count self-closing tags (shouldn't affect indentation)
+                        const selfClosingTags = (prevLine.match(/<[^>]*\/>/g) || []).length;
+                        
+                        indent += (openTags - selfClosingTags) - closeTags;
+                    }
+                    
+                    // Adjust for current line if it's a closing tag
+                    if (trimmed.startsWith('</')) {
+                        indent = Math.max(0, indent - 1);
+                    }
+                    
+                    return '  '.repeat(Math.max(0, indent)) + trimmed;
+                })
+                .join('\n');
+            
+            return formatted;
+        } catch (error) {
+            console.error('HTML formatting error:', error);
+            return html;
+        }
+    }
+
+    formatCss(css) {
+        try {
+            // Enhanced CSS formatting
+            let formatted = css
+                // Remove extra whitespace
+                .replace(/\s+/g, ' ')
+                .trim()
+                // Format selectors and opening braces
+                .replace(/\s*{\s*/g, ' {\n  ')
+                // Format properties
+                .replace(/;\s*/g, ';\n  ')
+                // Format closing braces
+                .replace(/\s*}\s*/g, '\n}\n\n')
+                // Format comma-separated selectors
+                .replace(/,\s*/g, ',\n')
+                // Clean up multiple newlines
+                .replace(/\n\s*\n\s*\n/g, '\n\n')
+                // Remove trailing spaces from properties
+                .replace(/\s+;/g, ';')
+                // Clean up the last closing brace
+                .replace(/}\n\n$/, '}')
+                .trim();
+            
+            // Additional cleanup for nested rules or at-rules
+            formatted = formatted
+                .replace(/(@[^{]+{\s*)/g, '$1\n  ')
+                .replace(/(@media[^{]+{\s*)/g, '$1\n  ')
+                .replace(/(@keyframes[^{]+{\s*)/g, '$1\n  ');
+            
+            return formatted;
+        } catch (error) {
+            console.error('CSS formatting error:', error);
+            return css;
+        }
     }
 
     updateHtml(e) {
