@@ -1,6 +1,6 @@
 {
   "name": "grapesjs-component-code-editor",
-  "version": "1.0.20",
+  "version": "1.0.22",
   "description": "Grapesjs Component Code Editor",
   "main": "dist/grapesjs-component-code-editor.min.js",
   "repository": {
@@ -8,9 +8,9 @@
     "url": "https://github.com/ju99ernaut/grapesjs-component-code-editor.git"
   },
   "scripts": {
-    "start": "grapesjs-cli serve",
-    "build": "grapesjs-cli build",
-    "build:css": "node-sass src/styles.scss dist/grapesjs-component-code-editor.min.css --output-style compressed",
+    "start": "set NODE_OPTIONS=--openssl-legacy-provider && grapesjs-cli serve",
+    "build": "set NODE_OPTIONS=--openssl-legacy-provider && grapesjs-cli build",
+    "build:css": "sass src/styles.scss dist/grapesjs-component-code-editor.min.css --style compressed",
     "bump": "npm version patch -m 'Bump v%s'"
   },
   "keywords": [
@@ -21,7 +21,7 @@
   ],
   "devDependencies": {
     "grapesjs-cli": "^1.0.12",
-    "node-sass": "^7.0.0"
+    "sass": "^1.89.2"
   },
   "author": "Brendon Ngirazi",
   "license": "MIT",
