@@ -2,11 +2,7 @@
 
 A plugin that allows you to edit the code of a component that is selected on the canvas using Monaco Editor (VS Code's editor) with syntax highlighting, auto-formatting, and advanced editing features.
 
-<p align="center">
- <img src="https://media.giphy.com/media/mDGcQfZdQGHUAhlLD7/giphy.gif">
-</p>
-
-[DEMO](https://codepen.io/ju99ernaut/pen/RwaqwPQ)
+[VIEW DEMO - https://dev.use.senangwebs.com/maker/grapesjs-component-monaco-editor-demo](https://dev.use.senangwebs.com/maker/grapesjs-component-monaco-editor-demo)
 
 ## Features
 
@@ -32,6 +28,7 @@ A plugin that allows you to edit the code of a component that is selected on the
 ```html
 <link href="https://unpkg.com/grapesjs/dist/css/grapes.min.css" rel="stylesheet">
 <script src="https://unpkg.com/grapesjs"></script>
+
 <link href="https://unpkg.com/grapesjs-component-monaco-editor/dist/grapesjs-component-monaco-editor.min.css" rel="stylesheet">
 <script src="https://unpkg.com/grapesjs-component-monaco-editor"></script>
 
@@ -161,6 +158,7 @@ Directly in the browser
 ```html
 <link href="https://unpkg.com/grapesjs/dist/css/grapes.min.css" rel="stylesheet"/>
 <script src="https://unpkg.com/grapesjs"></script>
+
 <link href="./dist/grapesjs-component-monaco-editor.min.css" rel="stylesheet">
 <script src="./dist/grapesjs-component-monaco-editor.min.js"></script>
 
