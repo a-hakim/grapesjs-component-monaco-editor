@@ -105,6 +105,10 @@ export class CodeEditor {
             setContent: (content) => {
                 if (editorWrapper.editor) {
                     editorWrapper.editor.setValue(content || '');
+                    // Auto-format the code after setting content
+                    setTimeout(() => {
+                        this.formatCodeAutomatically(type, editorWrapper.editor);
+                    }, 100);
                 } else {
                     editorWrapper.pendingContent = content;
                 }
@@ -179,7 +183,7 @@ export class CodeEditor {
                     window.monaco.KeyMod.CtrlCmd | window.monaco.KeyMod.Shift | window.monaco.KeyCode.KeyF
                 ],
                 run: () => {
-                    this.formatCode(type);
+                    this.formatCodeAutomatically(type, monacoEditor);
                 }
             });
 
@@ -190,6 +194,13 @@ export class CodeEditor {
             this.monacoInstances[type] = monacoEditor;
             
             console.log(`Monaco editor created successfully for ${type}`);
+            
+            // Auto-format any pending content
+            if (editorWrapper.pendingContent && editorWrapper.pendingContent.trim()) {
+                setTimeout(() => {
+                    this.formatCodeAutomatically(type, monacoEditor);
+                }, 200);
+            }
             
             // Trigger layout after a short delay to ensure proper sizing
             setTimeout(() => {
@@ -233,13 +244,11 @@ export class CodeEditor {
         const btnText = type === 'html' ? opts.htmlBtnText : opts.cssBtnText;
         const cleanCssBtn = (opts.cleanCssBtn && type === 'css') ?
             `<button class="cp-delete-${type} ${pfx}btn-prim">${opts.cleanCssBtnText}</button>` : '';
-        const formatBtn = `<button class="cp-format-${type} ${pfx}btn-prim" title="Format Code">Format</button>`;
         section.append($(`
             <div class="codepanel-separator">
                 <div class="codepanel-label">${type}</div>
                 <div class="cp-btn-container">
                     ${cleanCssBtn}
-                    ${formatBtn}
                     <button class="cp-apply-${type} ${pfx}btn-prim">${btnText}</button>
                 </div>
             </div>`));
@@ -273,13 +282,6 @@ export class CodeEditor {
 
         this.opts.cleanCssBtn && this.codePanel.find('.cp-delete-css')
             .on('click', this.deleteSelectedCss.bind(this));
-
-        // Add format button event listeners
-        this.codePanel.find('.cp-format-html')
-            .on('click', this.formatCode.bind(this, 'html'));
-
-        this.codePanel.find('.cp-format-css')
-            .on('click', this.formatCode.bind(this, 'css'));
 
         Split(sections, {
             direction: 'vertical',
@@ -374,6 +376,16 @@ export class CodeEditor {
         
         this.updateEditorContents();
         
+        // Auto-format existing content when showing the panel
+        setTimeout(() => {
+            if (this.monacoInstances.html && this.monacoInstances.html.getValue().trim()) {
+                this.formatCodeAutomatically('html', this.monacoInstances.html);
+            }
+            if (this.monacoInstances.css && this.monacoInstances.css.getValue().trim()) {
+                this.formatCodeAutomatically('css', this.monacoInstances.css);
+            }
+        }, 300);
+        
         // make sure editor is aware of width change after the 300ms effect ends
         setTimeout(this.refreshEditors.bind(this), 320);
 
@@ -398,41 +410,27 @@ export class CodeEditor {
         this.cssCodeEditor.refresh();
     }
 
-    formatCode(type) {
-        const monacoEditor = this.monacoInstances[type];
-        if (!monacoEditor) {
-            console.warn(`Monaco editor for ${type} not found`);
-            return;
-        }
-
-        // Show formatting in progress
-        const button = this.codePanel.find(`.cp-format-${type}`);
-        const originalText = button.text();
-        button.text('Formatting...').prop('disabled', true);
+    formatCodeAutomatically(type, monacoEditor) {
+        if (!monacoEditor) return;
 
         try {
             // Try Monaco's built-in formatting first
             const action = monacoEditor.getAction('editor.action.formatDocument');
             if (action) {
                 action.run().then(() => {
-                    console.log(`Code formatted successfully for ${type}`);
+                    console.log(`Code auto-formatted successfully for ${type}`);
                 }).catch(error => {
-                    console.warn(`Monaco formatting failed for ${type}, using fallback:`, error);
+                    console.warn(`Monaco auto-formatting failed for ${type}, using fallback:`, error);
                     this.fallbackFormat(type, monacoEditor);
-                }).finally(() => {
-                    // Restore button
-                    button.text(originalText).prop('disabled', false);
                 });
             } else {
                 // Use fallback if action not available
                 this.fallbackFormat(type, monacoEditor);
-                button.text(originalText).prop('disabled', false);
             }
         } catch (error) {
-            console.error(`Failed to format ${type} code:`, error);
+            console.error(`Failed to auto-format ${type} code:`, error);
             // Fallback to basic formatting if Monaco formatting fails
             this.fallbackFormat(type, monacoEditor);
-            button.text(originalText).prop('disabled', false);
         }
     }
 
@@ -618,10 +616,33 @@ export class CodeEditor {
 
         this.component = this.editor.getSelected();
         if (this.component) {
-            this.htmlCodeEditor.setContent(this.getComponentHtml(this.component));
-            this.cssCodeEditor.setContent(this.editor.CodeManager.getCode(this.component, 'css', {
+            const htmlContent = this.getComponentHtml(this.component);
+            const cssContent = this.editor.CodeManager.getCode(this.component, 'css', {
                 cssc: this.editor.Css
-            }));
+            });
+            
+            // Set content without auto-formatting first to avoid double formatting
+            if (this.htmlCodeEditor.editor) {
+                this.htmlCodeEditor.editor.setValue(htmlContent || '');
+                if (htmlContent && htmlContent.trim()) {
+                    setTimeout(() => {
+                        this.formatCodeAutomatically('html', this.htmlCodeEditor.editor);
+                    }, 100);
+                }
+            } else {
+                this.htmlCodeEditor.pendingContent = htmlContent;
+            }
+            
+            if (this.cssCodeEditor.editor) {
+                this.cssCodeEditor.editor.setValue(cssContent || '');
+                if (cssContent && cssContent.trim()) {
+                    setTimeout(() => {
+                        this.formatCodeAutomatically('css', this.cssCodeEditor.editor);
+                    }, 150);
+                }
+            } else {
+                this.cssCodeEditor.pendingContent = cssContent;
+            }
         }
     }
 
