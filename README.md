@@ -1,8 +1,8 @@
-# GrapesJS Component Monaco Editor
+# GrapesJS Component with Monaco Editor
 
 A plugin that allows you to edit the code of a component that is selected on the canvas using Monaco Editor (VS Code's editor) with syntax highlighting, auto-formatting, and advanced editing features.
 
-![GrapesJS Component Monaco Editor](https://raw.githubusercontent.com/a-hakim/grapesjs-component-monaco-editor/master/preview.png)
+![GrapesJS Component with Monaco Editor](https://raw.githubusercontent.com/a-hakim/grapesjs-component-monaco-editor/master/preview.png)
 
 [VIEW DEMO - https://dev.use.senangwebs.com/maker/grapesjs-component-monaco-editor-demo](https://dev.use.senangwebs.com/maker/grapesjs-component-monaco-editor-demo)
 
