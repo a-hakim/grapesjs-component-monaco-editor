@@ -89,14 +89,6 @@ body, html {
 | `Ctrl+F` / `Cmd+F`             | Find                   |
 | `Ctrl+H` / `Cmd+H`             | Find and Replace       |
 
-## Summary
-
-* Plugin name: `grapesjs-component-monaco-editor`
-* Commands
-  * `open-code` - opens Monaco code editor in right panel
-  * `code-editor-object` - get `CodeEditor` object
-  * `code-editor-constructor` - get `CodeEditor` constructor
-
 ## Options
 
 
